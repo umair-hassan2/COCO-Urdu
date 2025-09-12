@@ -42,3 +42,13 @@ Follow these steps to reproduce the COCO-Urdu dataset:
 
 ---
 
+**Consider citing the work if you find this helpful**
+
+```bibtex
+@inproceedings{Hassan2025COCOUrduAL,
+  title={COCO-Urdu: A Large-Scale Urdu Image-Caption Dataset with Multimodal Quality Estimation},
+  author={Umair Hassan},
+  year={2025},
+  url={https://api.semanticscholar.org/CorpusID:281252320}
+}
+
