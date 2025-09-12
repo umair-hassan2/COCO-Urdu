@@ -2,7 +2,8 @@
 
 This repository contains scripts and instructions to reproduce the **COCO-Urdu** dataset, a large-scale Urdu image-caption dataset derived from MS COCO. The dataset is accompanied by a hybrid multimodal quality estimation (QE) pipeline for translation, validation, and iterative refinement.
 
-**Dataset:** [COCO-Urdu on Hugging Face](https://huggingface.co/datasets/umairhassan02/urdu-translated-coco-captions-subset)
+- **Research Paper:** https://www.arxiv.org/abs/2509.09014
+- **Dataset:** [COCO-Urdu on Hugging Face](https://huggingface.co/datasets/umairhassan02/urdu-translated-coco-captions-subset)
 
 ---
 
