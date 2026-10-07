@@ -17,3 +17,4 @@
 | VLM baselines | `10_vlm_zero_shot.py` | Colab L4 | `results/vlm/` |
 
 Paper sections map: §3 corpus ← 00/03/04/09 · §4 human study ← 05/07 · §4.3 QE meta-eval ← 06/07 · §5 experiments ← 08/10.
+| Figures | `12_figures.py` | Mac | `results/figures/F1..F5` |
