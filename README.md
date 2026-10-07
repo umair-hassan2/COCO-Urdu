@@ -5,6 +5,10 @@ This repository contains scripts and instructions to reproduce the **COCO-Urdu**
 - **Research Paper:** https://www.arxiv.org/abs/2509.09014
 - **Dataset:** [COCO-Urdu on Hugging Face](https://huggingface.co/datasets/umairhassan02/urdu-translated-coco-captions-subset)
 
+> **v2 in progress (branch `v2`).** v1 pipeline notebooks are preserved under `notebooks/legacy/`. v2 adds a stronger translator,
+> a native-speaker human study (system comparison + QE validation), retrieval baselines, and a QE-selected release.
+> Start with `docs/V2_ROADMAP.md`, `colab/README.md`, and `NOTES.md`. Setup: `uv sync --extra rating --extra analysis`.
+
 ---
 
 ## Overview
@@ -15,28 +19,28 @@ This repository contains scripts for preprocessing, translation, quality estimat
 
 ---
 
-## Reproduction Steps
+## v1 reproduction steps (legacy notebooks)
 
 Follow these steps to reproduce the COCO-Urdu dataset:
 
 1. **Dataset Splitting**  
-   Load the MS COCO dataset and preprocess it using the `dataset_split` script to generate the desired training and validation splits.
+   Load the MS COCO dataset and preprocess it using the `notebooks/legacy/dataset_split.ipynb` to generate the desired training and validation splits.
 
 2. **Translation with Hybrid QE**  
-   Generate Urdu translations and validate them with the hybrid multimodal quality estimation pipeline using the `translation_pipeline` script.  
+   Generate Urdu translations and validate them with the hybrid multimodal quality estimation pipeline using the `notebooks/legacy/translation_pipeline.ipynb`.  
    **Requirements:** GPU (≥32GB recommended, e.g., A100 or RTX 5090). The pipeline supports distributed execution across multiple GPUs for faster processing.
 
 3. **Reference Translation Generation**  
-   Produce reference translations for evaluation using the `nllb_reference_generation` script. GPU execution is recommended.
+   Produce reference translations for evaluation using the `notebooks/legacy/nllb_reference_generation.ipynb`. GPU execution is recommended.
 
 4. **Iterative Refinement of Low-Scoring Captions**  
-   Refine captions identified as low-quality by the hybrid QE pipeline using the `targeted_refinements` script.
+   Refine captions identified as low-quality by the hybrid QE pipeline using the `notebooks/legacy/targetted_refinements.ipynb`.
 
 5. **Benchmarking**  
-   Evaluate captions before and after refinement with the `benchmarking` script. This handles all metrics and ensures consistency across iterations.
+   Evaluate captions before and after refinement with the `notebooks/legacy/benchmarking.ipynb`. This handles all metrics and ensures consistency across iterations.
 
 6. **Final Dataset Assembly**  
-   Collate all processed translations and generate the final version of COCO-Urdu using the `generate_final_version` script.
+   Collate all processed translations and generate the final version of COCO-Urdu using the `notebooks/legacy/generate_final_version.ipynb`.
 
 **Note:** Depending on hardware and compute resources, full reproduction may take up to ~40 hours.
 
@@ -51,4 +55,7 @@ Follow these steps to reproduce the COCO-Urdu dataset:
   year={2025},
   url={https://api.semanticscholar.org/CorpusID:281252320}
 }
+```
 
+## License
+Code: Apache-2.0 (`LICENSE`). Captions and ratings: CC BY 4.0 (`DATA_LICENSE.md`). Images are not redistributed.

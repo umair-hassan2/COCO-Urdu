@@ -1,0 +1,25 @@
+# data & artifacts (never commit)
+data/
+results/*.sqlite
+results/**/*.parquet
+*.npy
+*.pt
+*.safetensors
+hf_cache/
+wandb/
+
+# python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.ipynb_checkpoints/
+
+# secrets
+.env
+*.key
+secrets.toml
+.streamlit/secrets.toml
+
+# os
+.DS_Store
