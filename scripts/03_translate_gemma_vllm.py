@@ -14,6 +14,7 @@ Verify the quantized checkpoint before the full run (1K-item sanity pass + scrip
 import argparse
 import io
 import sys
+import time
 from pathlib import Path
 
 import pandas as pd
@@ -22,6 +23,7 @@ from huggingface_hub import HfApi, hf_hub_download
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from cocourdu import DATA
 from cocourdu.data import load_captions_v1
+from cocourdu.log import Progress, get_logger
 from cocourdu.prompts import FEW_SHOT, SYSTEM_PROMPT, parse_translation
 
 
@@ -41,6 +43,7 @@ def main():
     ap.add_argument("--merge", action="store_true", help="download all chunks and write data/translations/<system>.parquet")
     args = ap.parse_args()
 
+    log = get_logger()
     api = HfApi()
     api.create_repo(args.hf_repo, repo_type="dataset", private=True, exist_ok=True)
     existing = set(api.list_repo_files(args.hf_repo, repo_type="dataset"))
@@ -51,15 +54,21 @@ def main():
         df = pd.concat(dfs, ignore_index=True).drop_duplicates("uid")
         out = DATA / "translations"; out.mkdir(parents=True, exist_ok=True)
         df.to_parquet(out / f"{args.system}.parquet", index=False)
-        print(f"merged {len(files)} chunks -> {len(df)} rows -> {out / (args.system + '.parquet')}")
+        log.info(f"merged {len(files)} chunks -> {len(df)} rows -> {out / (args.system + '.parquet')}")
         return
 
     from vllm import LLM, SamplingParams
     caps = load_captions_v1()[["uid", "caption_en"]].drop_duplicates("uid").reset_index(drop=True)
     if args.limit:
         caps = caps.head(args.limit)
+    n_chunks = -(-len(caps) // args.chunk_size)
+    have = sum(1 for f in existing if f.startswith(f'chunks/{args.system}/'))
+    log.info(f"{len(caps):,} captions → {n_chunks} chunks of {args.chunk_size}; {have} already on the Hub; model={args.model}")
+    t_load = time.time()
     llm = LLM(model=args.model, quantization=args.quantization, max_model_len=args.max_model_len, dtype="auto", gpu_memory_utilization=0.92)
     tok = llm.get_tokenizer()
+    log.info(f"model loaded in {time.time() - t_load:.0f}s")
+    prog = Progress(len(caps), log, 'captions')
     sp = SamplingParams(temperature=0, max_tokens=160)
 
     def build(en):
@@ -70,14 +79,15 @@ def main():
         end = min(start + args.chunk_size, len(caps))
         name = chunk_name(args.system, start, end)
         if name in existing:
-            print(f"skip {name} (exists)"); continue
+            log.info(f"skip {name} (exists)"); prog.done += end - start; continue
         sub = caps.iloc[start:end]
         outs = llm.generate([build(en) for en in sub.caption_en], sp)
         ur = [parse_translation(o.outputs[0].text) for o in outs]
         df = pd.DataFrame({"uid": sub.uid.values, "caption_en": sub.caption_en.values, f"ur_{args.system}": ur})
         buf = io.BytesIO(); df.to_parquet(buf, index=False); buf.seek(0)
         api.upload_file(path_or_fileobj=buf, path_in_repo=name, repo_id=args.hf_repo, repo_type="dataset")
-        print(f"uploaded {name} ({len(df)} rows)")
+        empty = sum(1 for u in ur if not u)
+        prog.step(len(df), f"chunk {start // args.chunk_size + 1}/{n_chunks} uploaded ({empty} empty outputs)")
 
 
 if __name__ == "__main__":
