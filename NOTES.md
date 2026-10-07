@@ -13,7 +13,7 @@
 - Human study: ≥2 raters per (item, system), 300-item core with all raters; author rates and is disclosed.
 
 ## TODO / pending
-- [ ] Decide translation route (A: Gemma 3 27B on Colab, B: API, C: both) — `colab/README.md`
+- [x] Translation route: Gemma 3 27B on Colab only (no paid APIs)
 - [ ] Mac RAM → xCOMET-XL locally or on Colab
 - [ ] Find/verify a 4-bit gemma-3-27b-it checkpoint that loads in vLLM
 - [ ] Build `data/qe_full/comet_kiwi.parquet` loop (colab/README §3) — small script, not yet written

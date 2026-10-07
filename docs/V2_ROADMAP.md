@@ -6,7 +6,7 @@
 | Table 2 audit | `01_table2_forensics.py` | Mac | `results/table2_forensics.md` |
 | Image embeddings | `02_embed_images.py` | Mac (MPS) | `data/embeddings/<model>/` |
 | Lexicon | `build_lexicon.py` | Mac | `data/lexicon/urdu_words.txt` |
-| Re-translation | `03_translate_gemma_vllm.py` or `03_translate_api.py` | Colab A100 / Mac+API | `data/translations/<system>.parquet` |
+| Re-translation | `03_translate_gemma_vllm.py` | Colab A100 | `data/translations/<system>.parquet` |
 | Sanity | `04_sanity_check.py` | Mac | `results/sanity_<system>.md` |
 | Study items | `05_build_study.py --raters ...` | Mac | `data/study/{items.jsonl,assignment.json}` |
 | Rating | `rating_tool/app.py` | Mac (+cloudflared) | `results/ratings.sqlite` |

@@ -23,7 +23,6 @@ Full run (re-run the same command after any disconnect; finished chunks are skip
 !python scripts/03_translate_gemma_vllm.py --system gemma27b --hf-repo <you>/coco-urdu-v2-chunks --merge
 ```
 Notes: a 27B model needs a 4-bit checkpoint (AWQ/GPTQ) on 40 GB; verify the repo exists and loads in vLLM before the full run. If no A100: `--model google/gemma-3-12b-it` on L4 in bf16 (`--system gemma12b`).
-**API alternative (0 units, ~$10–45):** run `scripts/03_translate_api.py` on the Mac instead (see docstring).
 
 ## 2. xCOMET-QE on study items (L4, ~2 units) — only if the Mac has < 32 GB RAM
 ```python

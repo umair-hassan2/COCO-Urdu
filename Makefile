@@ -4,10 +4,10 @@ PY := uv run python
 .PHONY: setup stats forensics embed sanity study qe analyze retrieval rate
 
 setup:            ## create venv with core + rating + analysis deps
-	uv sync --extra rating --extra analysis --extra api
+	uv sync --extra rating --extra analysis
 
 setup-ml:         ## add torch/transformers/COMET (Mac or GPU box)
-	uv sync --extra rating --extra analysis --extra api --extra qe
+	uv sync --extra rating --extra analysis --extra qe
 
 stats:            ## reconcile dataset counts -> results/stats.json
 	$(PY) scripts/00_dataset_stats.py

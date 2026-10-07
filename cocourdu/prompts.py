@@ -1,4 +1,4 @@
-"""Shared translation prompt for LLM translators (API and vLLM). Keep identical across systems for a fair comparison."""
+"""Translation prompt for the vLLM translator. Keep identical across systems for a fair comparison."""
 import re
 
 SYSTEM_PROMPT = (

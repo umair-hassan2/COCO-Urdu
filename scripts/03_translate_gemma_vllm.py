@@ -1,4 +1,4 @@
-"""Offline vLLM translation for Colab A100 40GB (Gemma 3 27B in 4-bit) — chunked and resumable via HF Hub.
+"""The v2 translator: offline vLLM on Colab A100 40GB (Gemma 3 27B in 4-bit) — chunked and resumable via HF Hub.
 
 Each chunk of captions -> parquet -> uploaded to a private HF dataset repo under chunks/<system>/<start>-<end>.parquet.
 Re-running skips chunks that already exist, so Colab disconnects cost nothing. Merge with --merge at the end.

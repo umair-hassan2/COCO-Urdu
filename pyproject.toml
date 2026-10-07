@@ -21,7 +21,6 @@ dependencies = [
 
 [project.optional-dependencies]
 rating = ["streamlit>=1.38"]
-api = ["openai>=1.50"]
 # heavy ML deps; install only where needed (Mac or Colab)
 ml = [
   "torch>=2.4",
