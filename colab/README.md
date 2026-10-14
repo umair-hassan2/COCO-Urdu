@@ -36,18 +36,25 @@ from huggingface_hub import notebook_login; notebook_login()   # needed for gate
 ```
 
 ## 1. Re-translation — Gemma 3 27B (A100 40 GB, ~25–35 units for 318K captions)
+Model: **`RedHatAI/gemma-3-27b-it-quantized.w4a16`** — compressed-tensors W4A16, ~19.7 GB on disk,
+`Gemma3ForConditionalGeneration`, 131K context, needs `vllm>=0.8.0`. Fits an A100 40 GB with room for KV cache.
+(Rejected `pytorch/gemma-3-27b-it-AWQ-INT4`: its card says AWQ INT4 is H100/SM90-only, and it needs a vLLM nightly.)
+
+`--hf-repo` is a **private write target for resumable chunk checkpoints**, created automatically on first run.
+It is *not* an input dataset — the inputs are hardcoded in `cocourdu/data.py`. Use `umairhassan02/coco-urdu-v2-chunks`.
+
 Sanity pass first (≈1 unit), then check `results/sanity_gemma27b.md` before spending the rest:
 ```python
-!python scripts/03_translate_gemma_vllm.py --system gemma27b --model <QUANTIZED-gemma-3-27b-it repo> --hf-repo <you>/coco-urdu-v2-chunks --limit 1000 --chunk-size 1000
-!python scripts/03_translate_gemma_vllm.py --system gemma27b --hf-repo <you>/coco-urdu-v2-chunks --merge
+!python scripts/03_translate_gemma_vllm.py --system gemma27b --model RedHatAI/gemma-3-27b-it-quantized.w4a16 --hf-repo umairhassan02/coco-urdu-v2-chunks --limit 1000 --chunk-size 1000
+!python scripts/03_translate_gemma_vllm.py --system gemma27b --hf-repo umairhassan02/coco-urdu-v2-chunks --merge
 !python scripts/04_sanity_check.py --translations data/translations/gemma27b.parquet
 ```
 Full run (re-run the same command after any disconnect; finished chunks are skipped):
 ```python
-!python scripts/03_translate_gemma_vllm.py --system gemma27b --model <QUANTIZED repo> --hf-repo <you>/coco-urdu-v2-chunks --chunk-size 20000
-!python scripts/03_translate_gemma_vllm.py --system gemma27b --hf-repo <you>/coco-urdu-v2-chunks --merge
+!python scripts/03_translate_gemma_vllm.py --system gemma27b --model RedHatAI/gemma-3-27b-it-quantized.w4a16 --hf-repo umairhassan02/coco-urdu-v2-chunks --chunk-size 20000
+!python scripts/03_translate_gemma_vllm.py --system gemma27b --hf-repo umairhassan02/coco-urdu-v2-chunks --merge
 ```
-Notes: a 27B model needs a 4-bit checkpoint (AWQ/GPTQ) on 40 GB; verify the repo exists and loads in vLLM before the full run. If no A100: `--model google/gemma-3-12b-it` on L4 in bf16 (`--system gemma12b`).
+No A100? `--model google/gemma-3-12b-it` on L4 in bf16 (`--system gemma12b`).
 
 ## 2. xCOMET-QE on study items (L4, ~2 units) — only if the Mac has < 32 GB RAM
 ```python

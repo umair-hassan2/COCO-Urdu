@@ -15,5 +15,5 @@
 ## TODO / pending
 - [x] Translation route: Gemma 3 27B on Colab only (no paid APIs)
 - [ ] Mac RAM → xCOMET-XL locally or on Colab
-- [ ] Find/verify a 4-bit gemma-3-27b-it checkpoint that loads in vLLM
+- [x] 4-bit gemma-3-27b-it for vLLM: `RedHatAI/gemma-3-27b-it-quantized.w4a16` (compressed-tensors W4A16, 19.7 GB, vllm>=0.8.0, A100-compatible). Rejected `pytorch/gemma-3-27b-it-AWQ-INT4` — H100/SM90-only per its card, needs vLLM nightly.
 - [x] Build `data/qe_full/comet_kiwi.parquet` loop — `scripts/11_comet_full.py` (+ `colab/02_comet_full.ipynb`)
