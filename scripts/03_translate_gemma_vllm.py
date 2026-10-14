@@ -57,13 +57,16 @@ def main():
         log.info(f"merged {len(files)} chunks -> {len(df)} rows -> {out / (args.system + '.parquet')}")
         return
 
+    log.info("importing vllm (~1 min on a cold runtime)")
     from vllm import LLM, SamplingParams
+    log.info("loading captions from the HF dataset (cached to data/captions_v1.parquet after the first run)")
     caps = load_captions_v1()[["uid", "caption_en"]].drop_duplicates("uid").reset_index(drop=True)
     if args.limit:
         caps = caps.head(args.limit)
     n_chunks = -(-len(caps) // args.chunk_size)
     have = sum(1 for f in existing if f.startswith(f'chunks/{args.system}/'))
     log.info(f"{len(caps):,} captions → {n_chunks} chunks of {args.chunk_size}; {have} already on the Hub; model={args.model}")
+    log.info(f"loading {args.model} — downloads ~20 GB on a cold runtime, watch the Resources panel")
     t_load = time.time()
     llm = LLM(model=args.model, quantization=args.quantization, max_model_len=args.max_model_len, dtype="auto", gpu_memory_utilization=0.92)
     tok = llm.get_tokenizer()
@@ -81,6 +84,7 @@ def main():
         if name in existing:
             log.info(f"skip {name} (exists)"); prog.done += end - start; continue
         sub = caps.iloc[start:end]
+        log.info(f"chunk {start // args.chunk_size + 1}/{n_chunks}: generating {len(sub):,} captions")
         outs = llm.generate([build(en) for en in sub.caption_en], sp)
         ur = [parse_translation(o.outputs[0].text) for o in outs]
         df = pd.DataFrame({"uid": sub.uid.values, "caption_en": sub.caption_en.values, f"ur_{args.system}": ur})

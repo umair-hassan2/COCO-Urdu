@@ -71,28 +71,29 @@ Model: **`RedHatAI/gemma-3-27b-it-quantized.w4a16`** — compressed-tensors W4A1
 It is *not* an input dataset — the inputs are hardcoded in `cocourdu/data.py`. Use `umairhassan02/coco-urdu-v2-chunks`.
 
 Sanity pass first (≈1 unit), then check `results/sanity_gemma27b.md` before spending the rest:
+`python -u` keeps the logs streaming: without it Colab shows nothing until the process exits.
 ```python
-!python scripts/03_translate_gemma_vllm.py --system gemma27b --model RedHatAI/gemma-3-27b-it-quantized.w4a16 --hf-repo umairhassan02/coco-urdu-v2-chunks --limit 1000 --chunk-size 1000
-!python scripts/03_translate_gemma_vllm.py --system gemma27b --hf-repo umairhassan02/coco-urdu-v2-chunks --merge
-!python scripts/04_sanity_check.py --translations data/translations/gemma27b.parquet
+!python -u scripts/03_translate_gemma_vllm.py --system gemma27b --model RedHatAI/gemma-3-27b-it-quantized.w4a16 --hf-repo umairhassan02/coco-urdu-v2-chunks --limit 1000 --chunk-size 1000
+!python -u scripts/03_translate_gemma_vllm.py --system gemma27b --hf-repo umairhassan02/coco-urdu-v2-chunks --merge
+!python -u scripts/04_sanity_check.py --translations data/translations/gemma27b.parquet
 ```
 Full run (re-run the same command after any disconnect; finished chunks are skipped):
 ```python
-!python scripts/03_translate_gemma_vllm.py --system gemma27b --model RedHatAI/gemma-3-27b-it-quantized.w4a16 --hf-repo umairhassan02/coco-urdu-v2-chunks --chunk-size 20000
-!python scripts/03_translate_gemma_vllm.py --system gemma27b --hf-repo umairhassan02/coco-urdu-v2-chunks --merge
+!python -u scripts/03_translate_gemma_vllm.py --system gemma27b --model RedHatAI/gemma-3-27b-it-quantized.w4a16 --hf-repo umairhassan02/coco-urdu-v2-chunks --chunk-size 20000
+!python -u scripts/03_translate_gemma_vllm.py --system gemma27b --hf-repo umairhassan02/coco-urdu-v2-chunks --merge
 ```
 No A100? `--model google/gemma-3-12b-it` on L4 in bf16 (`--system gemma12b`).
 
 ## 2. xCOMET-QE on study items (L4, ~2 units) — only if the Mac has < 32 GB RAM
 ```python
-!python scripts/06_score_qe.py --metrics xcomet
+!python -u scripts/06_score_qe.py --metrics xcomet
 ```
 (`sync.py push data/study/items.jsonl` on the Mac first; the notebook pulls it, and pushes
 `data/study/qe_scores.parquet` back when it finishes.)
 
 ## 3. COMET-Kiwi over ALL captions × systems for qe-selection (L4, ~2–3 units)
 ```python
-!python scripts/11_comet_full.py --systems seamless gemma27b
+!python -u scripts/11_comet_full.py --systems seamless gemma27b
 ```
 Writes `data/qe_full/comet_kiwi.parquet` (`uid, system, score`), resumable per system. The notebook pulls
 `data/translations/<system>.parquet` from the artifacts repo (NB01 pushed it). Then on the Mac:
@@ -100,8 +101,8 @@ Writes `data/qe_full/comet_kiwi.parquet` (`uid, system, score`), resumable per s
 
 ## 4. Zero-shot VLM captioning baselines (L4, ~5–7 units each)
 ```python
-!python scripts/10_vlm_zero_shot.py --model Qwen/Qwen2.5-VL-7B-Instruct --n 500
-!python scripts/10_vlm_zero_shot.py --model google/gemma-3-12b-it --n 500
+!python -u scripts/10_vlm_zero_shot.py --model Qwen/Qwen2.5-VL-7B-Instruct --n 500
+!python -u scripts/10_vlm_zero_shot.py --model google/gemma-3-12b-it --n 500
 ```
 
 ## What runs on the Mac (0 units)
