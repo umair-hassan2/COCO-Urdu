@@ -13,6 +13,7 @@ wandb/
 __pycache__/
 *.pyc
 *.egg-info/
+uv.lock
 .ipynb_checkpoints/
 
 # secrets
