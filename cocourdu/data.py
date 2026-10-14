@@ -17,6 +17,7 @@ from huggingface_hub import HfApi, HfFileSystem
 
 from . import DATA
 from .log import get_logger
+from .sync import try_pull, try_push
 
 HF_USER = "umairhassan02"
 # per-caption table with v1 QE scores (translated_captions = SeamlessM4T v2, references = NLLB-3B)
@@ -71,47 +72,59 @@ def caption_uid(image_id: int, caption_en: str) -> str:
     return f"{int(image_id)}:{h}"
 
 
-def load_captions_v1(cache: bool = True) -> pd.DataFrame:
-    """Per-caption v1 table: en caption, Seamless Urdu, NLLB ref, back-translation, QE scores."""
-    path = DATA / "captions_v1.parquet"
+def _cached(path: Path, build, cache: bool = True):
+    """Local file, else the artifacts repo, else build it from the source dataset and share it.
+
+    The source repos carry image bytes, so a projected read of them costs tens of minutes on a
+    home connection. The built table is text-only and a few tens of MB, so whichever machine
+    pays for it once hands it to the other through the artifacts repo.
+    """
     if cache and path.exists():
         return pd.read_parquet(path)
+    if cache and try_pull(path):
+        return pd.read_parquet(path)
+    df = build()
+    if cache:
+        DATA.mkdir(parents=True, exist_ok=True)
+        df.to_parquet(path, index=False)
+        try_push(path)
+    return df
+
+
+def load_captions_v1(cache: bool = True) -> pd.DataFrame:
+    """Per-caption v1 table: en caption, Seamless Urdu, NLLB ref, back-translation, QE scores."""
+    return _cached(DATA / "captions_v1.parquet", _build_captions_v1, cache)
+
+
+def _build_captions_v1() -> pd.DataFrame:
     df = read_hf_parquet(DS_CAPTIONS_V1, CAPTION_TEXT_COLS)
     df = df.rename(columns={"caption": "caption_en", "translated_captions": "ur_seamless", "references": "ur_nllb_ref"})
     df["uid"] = [caption_uid(i, c) for i, c in zip(df.image_id, df.caption_en)]
     # row order within split is the original dataset index; keep it for joining to legacy JSON ids
     df["row_idx"] = df.groupby("split").cumcount()
-    if cache:
-        DATA.mkdir(parents=True, exist_ok=True)
-        df.to_parquet(path, index=False)
     return df
 
 
 def load_refined_v1(cache: bool = True) -> pd.DataFrame:
     """Per-caption table after Qwen-14B refinement (both translated_captions and references were rewritten)."""
-    path = DATA / "captions_refined_v1.parquet"
-    if cache and path.exists():
-        return pd.read_parquet(path)
+    return _cached(DATA / "captions_refined_v1.parquet", _build_refined_v1, cache)
+
+
+def _build_refined_v1() -> pd.DataFrame:
     df = read_hf_parquet(DS_CAPTIONS_REFINED, ["image_id", "caption", "translated_captions", "references", "final_score"])
     df = df.rename(columns={"caption": "caption_en", "translated_captions": "ur_refined_mt", "references": "ur_refined_ref"})
     df["row_idx"] = df.groupby("split").cumcount()
-    if cache:
-        DATA.mkdir(parents=True, exist_ok=True)
-        df.to_parquet(path, index=False)
     return df
 
 
 def load_image_meta(cache: bool = True) -> pd.DataFrame:
     """Per-image metadata (no bytes): image_id, coco_url, flickr_url, license, annotation ids + captions."""
-    path = DATA / "images_meta.parquet"
-    if cache and path.exists():
-        return pd.read_parquet(path)
+    return _cached(DATA / "images_meta.parquet", _build_image_meta, cache)
+
+
+def _build_image_meta() -> pd.DataFrame:
     cols = ["image_id", "file_name", "coco_url", "flickr_url", "height", "width", "license_id", "annotations"]
-    df = read_hf_parquet(DS_IMAGES_V1, cols)
-    if cache:
-        DATA.mkdir(parents=True, exist_ok=True)
-        df.to_parquet(path, index=False)
-    return df
+    return read_hf_parquet(DS_IMAGES_V1, cols)
 
 
 def load_translations(system: str) -> pd.DataFrame:
