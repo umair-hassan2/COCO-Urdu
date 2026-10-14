@@ -28,11 +28,18 @@ Mac and Colab steps **interleave** — they are not two separate phases. Run top
 | 12 | Mac | `12_figures.py` | after 07 and 08 |
 
 ## 0. Bootstrap cell (every session)
+
+Auth comes from `HF_TOKEN` in the environment rather than an interactive `notebook_login()` prompt.
+Store it once in **Colab Secrets** (sidebar key icon) and enable it per notebook; `huggingface_hub`
+picks it up automatically, including inside the `!python` subprocesses. Job 1 needs **WRITE** scope
+(it creates the chunk repo and uploads to it); jobs 2-4 only read gated models.
 ```python
 !git clone https://github.com/umair-hassan2/COCO-Urdu.git -b v2 && cd COCO-Urdu
 %cd /content/COCO-Urdu
 !pip install -q -e . && pip install -q vllm        # vllm only for job 1
-from huggingface_hub import notebook_login; notebook_login()   # needed for gated COMET models and chunk uploads
+import os
+from google.colab import userdata          # Colab Secrets: sidebar key icon -> add HF_TOKEN
+os.environ['HF_TOKEN'] = userdata.get('HF_TOKEN')   # WRITE scope; inherited by the !python cells
 ```
 
 ## 1. Re-translation — Gemma 3 27B (A100 40 GB, ~25–35 units for 318K captions)
