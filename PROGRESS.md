@@ -7,7 +7,7 @@ Status: ☐ not started · ◐ running · ☑ done
 |---|-------|------|--------|-------|
 | 1 | Mac | `make setup-ml` · `make stats forensics` · `build_lexicon.py` | ◐ | setup-ml ☑ · lexicon ☑ 114,598 words · **stats/forensics still to run** |
 | 2 | Mac | `make embed` (~1 h MPS, background) | ☑ | 63,549 embeddings (58,549 train + 5,000 val), 53 min |
-| 3 | Colab NB01 (A100) | sanity 1K → read report → full run → push | ◐ | sanity passed, full run started 20:59 | → `data/translations/gemma27b.parquet`; blocks 4-12 |
+| 3 | Colab NB01 (A100) | sanity 1K → read report → full run → push | ◐ | **paused at 44%** — 7 chunks banked (0–140,000 of 317,829). Re-run the same cell to resume; banked chunks are skipped. ~9 chunks / 53 min / ~5 units left | → `data/translations/gemma27b.parquet`; blocks 4-12 |
 | 4 | Mac | `sync.py pull` + `04_sanity_check.py` | ☐ | gate before spending the rest of the A100 units |
 | 5 | Mac | `05_build_study.py --raters ...` | ☐ | → `data/study/items.jsonl` |
 | 6 | Mac | `06_score_qe.py --metrics comet_kiwi metricx siglip2` + push | ☐ | → `data/study/qe_scores.parquet` |
@@ -85,5 +85,7 @@ Model load is 384s cold, ~60s warm (torch.compile cache hit).
   keys); fixed in `4507341`. It had been taking down `04_sanity_check`, the A100 spend gate.
 - 2026-10-15 — Cache builds moved to a free CPU Colab runtime; the A100 sat at 0 GB GPU RAM while
   downloading, burning ~5.3 units/h for nothing.
+- 2026-10-15 — Translation paused overnight at chunk 7/16 to avoid burning A100 hours while asleep.
+  Resume point is `chunks/gemma27b/` on the chunk repo; nothing is lost but the in-flight chunk.
 - 2026-10-15 — All three dataset caches banked (121 MB). `build_lexicon` had been SIGTSTP-stopped
   for 2 h in the foreground; re-run under nohup it finished in 36 s — 114,598 words.
