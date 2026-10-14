@@ -5,7 +5,7 @@ Status: ☐ not started · ◐ running · ☑ done
 
 | # | Where | Step | Status | Notes |
 |---|-------|------|--------|-------|
-| 1 | Mac | `make setup-ml` · `make stats forensics` · `build_lexicon.py` | ◐ | → `results/stats.json`, `table2_forensics.md`, `data/lexicon/` |
+| 1 | Mac | `make setup-ml` · `make stats forensics` · `build_lexicon.py` | ◐ | setup-ml ☑ · lexicon ☑ 114,598 words · **stats/forensics still to run** |
 | 2 | Mac | `make embed` (~1 h MPS, background) | ☑ | 63,549 embeddings (58,549 train + 5,000 val), 53 min |
 | 3 | Colab NB01 (A100) | sanity 1K → read report → full run → push | ◐ | sanity passed, full run started 20:59 | → `data/translations/gemma27b.parquet`; blocks 4-12 |
 | 4 | Mac | `sync.py pull` + `04_sanity_check.py` | ☐ | gate before spending the rest of the A100 units |
@@ -48,6 +48,16 @@ pays for a table once hands it to the other. Check what is banked: `python scrip
 Eight scripts benefit: 00, 01, 03, 04, 05, 08, 09, 11. Not `02_embed_images` (streams image bytes),
 `build_lexicon` (fineweb), or 06/07/10/12 (local outputs only).
 
+**All three banked 2026-10-15** — 121 MB standing in for 17.4 GB of source repos, built in 32 min
+on a free CPU Colab runtime (0 compute units; the A100 had been doing this at 5.3 units/h with the
+GPU idle at 0 GB).
+
+| cache | size | source repo |
+|---|---|---|
+| `captions_v1.parquet` | 56.6 MB | 3.5 GB, 34 shards |
+| `captions_refined_v1.parquet` | 37.6 MB | 3.5 GB, 34 shards |
+| `images_meta.parquet` | 26.7 MB | 10.4 GB, 22 shards |
+
 ## Sanity gate (1K captions, gemma27b, 2026-10-14) — PASSED
 
 | check | rate |
@@ -75,3 +85,5 @@ Model load is 384s cold, ~60s warm (torch.compile cache hit).
   keys); fixed in `4507341`. It had been taking down `04_sanity_check`, the A100 spend gate.
 - 2026-10-15 — Cache builds moved to a free CPU Colab runtime; the A100 sat at 0 GB GPU RAM while
   downloading, burning ~5.3 units/h for nothing.
+- 2026-10-15 — All three dataset caches banked (121 MB). `build_lexicon` had been SIGTSTP-stopped
+  for 2 h in the foreground; re-run under nohup it finished in 36 s — 114,598 words.
