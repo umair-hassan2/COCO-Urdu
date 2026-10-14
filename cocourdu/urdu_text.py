@@ -18,13 +18,15 @@ DIGITS = re.compile(r"[0-9۰-۹٠-٩]")
 PUNCT = re.compile(r"[\s\.\,\!\?\;\:\-\"\'\(\)\[\]\{\}«»،۔؟؛…]+")
 DIACRITICS = re.compile(r"[ً-ْٰٓ-ٕ]")
 
-# Arabic-presentation and look-alike normalizations commonly needed for Urdu
+# Arabic-presentation and look-alike normalizations commonly needed for Urdu.
+# Keys must be single characters -- str.maketrans rejects sequences. NFC runs first in
+# normalize(), so heh goal + hamza above is already composed to U+06C2 by the time we get here.
 _CHAR_MAP = str.maketrans({
     "ي": "ی",  # Arabic yeh -> Farsi yeh
     "ك": "ک",  # Arabic kaf -> keheh
     "ۀ": "ہ",
     "ە": "ہ",
-    "ۂ": "ہ",
+    "ۂ": "ہ",  # heh goal with hamza above (NFC of U+06C1 U+0654)
     "أ": "ا", "إ": "ا", "ٱ": "ا",
     "‌": "", "‍": "", "‏": "", "‎": "", "﻿": "",
 })
