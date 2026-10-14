@@ -1,11 +1,14 @@
 """Load the public COCO-Urdu HF datasets without pulling image bytes.
 
-Parquet column projection over hf:// means only the requested columns are read,
-so the per-caption QE table (318K rows) loads in a minute without the images.
+Parquet column projection over hf:// means only the requested columns are read --
+the caption repo is 3.5 GB of shards carrying image bytes, and the text columns are
+a small fraction of that. The projection is latency-bound, not bandwidth-bound: each
+shard costs many small HTTP range requests, so the shards are read in parallel.
 """
 from __future__ import annotations
 
 import hashlib
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pandas as pd
@@ -13,6 +16,7 @@ import pyarrow.parquet as pq
 from huggingface_hub import HfApi, HfFileSystem
 
 from . import DATA
+from .log import get_logger
 
 HF_USER = "umairhassan02"
 # per-caption table with v1 QE scores (translated_captions = SeamlessM4T v2, references = NLLB-3B)
@@ -35,15 +39,29 @@ def _parquet_files(repo: str, split: str | None = None) -> list[str]:
     return sorted(files)
 
 
-def read_hf_parquet(repo: str, columns: list[str], split: str | None = None) -> pd.DataFrame:
-    """Read selected columns from every parquet shard of an HF dataset, adding a `split` column."""
-    fs = HfFileSystem()
-    frames = []
-    for f in _parquet_files(repo, split):
-        table = pq.read_table(f"hf://datasets/{repo}/{f}", columns=columns, filesystem=fs)
-        df = table.to_pandas()
+def read_hf_parquet(repo: str, columns: list[str], split: str | None = None, workers: int = 8) -> pd.DataFrame:
+    """Read selected columns from every parquet shard of an HF dataset, adding a `split` column.
+
+    Shards are fetched concurrently: a 34-shard repo read one at a time takes 15+ minutes,
+    which on a GPU runtime is billed idle time.
+    """
+    log = get_logger()
+    files = _parquet_files(repo, split)
+    log.info(f"{repo}: reading {len(columns)} columns from {len(files)} shards with {workers} workers")
+    done = 0
+
+    def one(f: str) -> pd.DataFrame:
+        nonlocal done
+        # one filesystem per thread: fsspec's shared instance is not safe for concurrent reads
+        fs = HfFileSystem(skip_instance_cache=True)
+        df = pq.read_table(f"hf://datasets/{repo}/{f}", columns=columns, filesystem=fs).to_pandas()
         df["split"] = Path(f).name.split("-")[0]
-        frames.append(df)
+        done += 1
+        log.info(f"  shard {done}/{len(files)} ({len(df):,} rows)")
+        return df
+
+    with ThreadPoolExecutor(workers) as pool:
+        frames = list(pool.map(one, files))
     return pd.concat(frames, ignore_index=True)
 
 
