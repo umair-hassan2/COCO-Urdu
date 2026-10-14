@@ -6,8 +6,8 @@ Status: ☐ not started · ◐ running · ☑ done
 | # | Where | Step | Status | Notes |
 |---|-------|------|--------|-------|
 | 1 | Mac | `make setup-ml` · `make stats forensics` · `build_lexicon.py` | ◐ | → `results/stats.json`, `table2_forensics.md`, `data/lexicon/` |
-| 2 | Mac | `make embed` (~1 h MPS, background) | ☑ | 63,549 embeddings in ~45 min |
-| 3 | Colab NB01 (A100) | sanity 1K → read report → full run → push | ◐ | → `data/translations/gemma27b.parquet`; blocks 4-12 |
+| 2 | Mac | `make embed` (~1 h MPS, background) | ☑ | 63,549 embeddings (58,549 train + 5,000 val), 53 min |
+| 3 | Colab NB01 (A100) | sanity 1K → read report → full run → push | ◐ | sanity passed, full run started 20:59 | → `data/translations/gemma27b.parquet`; blocks 4-12 |
 | 4 | Mac | `sync.py pull` + `04_sanity_check.py` | ☐ | gate before spending the rest of the A100 units |
 | 5 | Mac | `05_build_study.py --raters ...` | ☐ | → `data/study/items.jsonl` |
 | 6 | Mac | `06_score_qe.py --metrics comet_kiwi metricx siglip2` + push | ☐ | → `data/study/qe_scores.parquet` |
@@ -23,8 +23,8 @@ Status: ☐ not started · ◐ running · ☑ done
 
 | Job | Est. | Spent |
 |-----|------|-------|
-| NB01 sanity | ~1 | |
-| NB01 full | 25-35 | |
+| NB01 sanity | ~1 | ~1 |
+| NB01 full | 25-35 | ~9 est. (55.4 cap/s, warm runtime) |
 | NB03 xCOMET | ~2 | |
 | NB02 COMET-Kiwi | 2-3 | |
 | NB04 VLM (per model) | 5-7 | |
@@ -48,6 +48,20 @@ pays for a table once hands it to the other. Check what is banked: `python scrip
 Eight scripts benefit: 00, 01, 03, 04, 05, 08, 09, 11. Not `02_embed_images` (streams image bytes),
 `build_lexicon` (fineweb), or 06/07/10/12 (local outputs only).
 
+## Sanity gate (1K captions, gemma27b, 2026-10-14) — PASSED
+
+| check | rate |
+|---|---|
+| empty | 0.00% |
+| wrong_script | 0.00% |
+| too_short / too_long | 0.00% / 0.00% |
+| untranslated English | 0.10% (1) |
+| repeated_trigram | 0.30% (3) |
+| len_ratio_mean | 1.20 |
+
+Throughput 55.4 captions/s on the A100 → ~96 min for 317,829 captions in 16 chunks of 20K.
+Model load is 384s cold, ~60s warm (torch.compile cache hit).
+
 ## Log
 
 - 2026-10-14 — `scripts/sync.py` added; notebooks switched off browser upload/download (`c37b9a8`).
@@ -56,4 +70,8 @@ Eight scripts benefit: 00, 01, 03, 04, 05, 08, 09, 11. Not `02_embed_images` (st
 - 2026-10-14 — HF parquet shards read in parallel (`c998fe7`); measured gain is small, the read is
   throttle-bound rather than latency-bound.
 - 2026-10-14 — Dataset loaders serve from the artifacts repo before falling back to the source (`bd6952a`).
-- 2026-10-15 — Step 2 done: 63,549 SigLIP2 embeddings, ~45 min on MPS.
+- 2026-10-15 — Step 2 done: 63,549 SigLIP2 embeddings, 53 min on MPS.
+- 2026-10-15 — `cocourdu.urdu_text` could not import at all (`str.maketrans` rejects multi-char
+  keys); fixed in `4507341`. It had been taking down `04_sanity_check`, the A100 spend gate.
+- 2026-10-15 — Cache builds moved to a free CPU Colab runtime; the A100 sat at 0 GB GPU RAM while
+  downloading, burning ~5.3 units/h for nothing.
