@@ -5,9 +5,9 @@ Status: ☐ not started · ◐ running · ☑ done
 
 | # | Where | Step | Status | Notes |
 |---|-------|------|--------|-------|
-| 1 | Mac | `make setup-ml` · `make stats forensics` · `build_lexicon.py` | ☐ | → `results/stats.json`, `table2_forensics.md`, `data/lexicon/` |
-| 2 | Mac | `make embed` (~1 h MPS, background) | ☐ | → `data/embeddings/`; only step 10 needs it |
-| 3 | Colab NB01 (A100) | sanity 1K → read report → full run → push | ☐ | → `data/translations/gemma27b.parquet`; blocks 4-12 |
+| 1 | Mac | `make setup-ml` · `make stats forensics` · `build_lexicon.py` | ◐ | → `results/stats.json`, `table2_forensics.md`, `data/lexicon/` |
+| 2 | Mac | `make embed` (~1 h MPS, background) | ☑ | 63,549 embeddings in ~45 min |
+| 3 | Colab NB01 (A100) | sanity 1K → read report → full run → push | ◐ | → `data/translations/gemma27b.parquet`; blocks 4-12 |
 | 4 | Mac | `sync.py pull` + `04_sanity_check.py` | ☐ | gate before spending the rest of the A100 units |
 | 5 | Mac | `05_build_study.py --raters ...` | ☐ | → `data/study/items.jsonl` |
 | 6 | Mac | `06_score_qe.py --metrics comet_kiwi metricx siglip2` + push | ☐ | → `data/study/qe_scores.parquet` |
@@ -37,7 +37,23 @@ Status: ☐ not started · ◐ running · ☑ done
 - Artifacts cross machines via `scripts/sync.py` (private HF repo `umairhassan02/coco-urdu-v2-artifacts`).
   All four notebooks need a WRITE-scope `HF_TOKEN` in Colab Secrets.
 
+## Dataset caches
+
+The three source repos carry image bytes — 3.5 GB (captions), 3.5 GB (refined), 10.4 GB (images) —
+and a projected read of them is throttle-bound, measured at ~130s per shard, so ~70 min per table
+on the Mac. `load_captions_v1` / `load_refined_v1` / `load_image_meta` now try the local parquet,
+then the artifacts repo, and only then the source, pushing whatever they build. Whichever machine
+pays for a table once hands it to the other. Check what is banked: `python scripts/sync.py ls data`.
+
+Eight scripts benefit: 00, 01, 03, 04, 05, 08, 09, 11. Not `02_embed_images` (streams image bytes),
+`build_lexicon` (fineweb), or 06/07/10/12 (local outputs only).
+
 ## Log
 
 - 2026-10-14 — `scripts/sync.py` added; notebooks switched off browser upload/download (`c37b9a8`).
 - 2026-10-14 — Python cap raised to `<3.14` for the Colab 3.13 runtime (`a58e95d`).
+- 2026-10-14 — Colab jobs log each slow phase; README commands use `python -u` (`4680432`).
+- 2026-10-14 — HF parquet shards read in parallel (`c998fe7`); measured gain is small, the read is
+  throttle-bound rather than latency-bound.
+- 2026-10-14 — Dataset loaders serve from the artifacts repo before falling back to the source (`bd6952a`).
+- 2026-10-15 — Step 2 done: 63,549 SigLIP2 embeddings, ~45 min on MPS.
