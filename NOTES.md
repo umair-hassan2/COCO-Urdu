@@ -16,4 +16,4 @@
 - [x] Translation route: Gemma 3 27B on Colab only (no paid APIs)
 - [ ] Mac RAM → xCOMET-XL locally or on Colab
 - [ ] Find/verify a 4-bit gemma-3-27b-it checkpoint that loads in vLLM
-- [ ] Build `data/qe_full/comet_kiwi.parquet` loop (colab/README §3) — small script, not yet written
+- [x] Build `data/qe_full/comet_kiwi.parquet` loop — `scripts/11_comet_full.py` (+ `colab/02_comet_full.ipynb`)
