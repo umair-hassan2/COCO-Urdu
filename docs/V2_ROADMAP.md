@@ -13,8 +13,9 @@
 | QE baselines | `06_score_qe.py` | Mac / Colab L4 (xcomet) | `data/study/qe_scores.parquet` |
 | Analysis | `07_analyze_ratings.py` | Mac | `results/human_study/` |
 | Retrieval | `08_retrieval.py --condition ...` | Mac (MPS) | `results/retrieval/*.json` |
-| QE-selected release | `09_qe_select.py` | Mac (after Colab COMET loop) | `data/translations/qe_selected.parquet` |
 | VLM baselines | `10_vlm_zero_shot.py` | Colab L4 | `results/vlm/` |
 
-Paper sections map: §3 corpus ← 00/03/04/09 · §4 human study ← 05/07 · §4.3 QE meta-eval ← 06/07 · §5 experiments ← 08/10.
+Paper sections map: §3 corpus ← 00/03/04 · §4 human study ← 05/07 · §4.3 QE meta-eval ← 06/07 · §5 experiments ← 08/10.
+`09_qe_select.py` is retained in the tree but is **not part of the v2 pipeline** — it selects across
+systems, and the paper reports gemma27b only.
 | Figures | `12_figures.py` | Mac | `results/figures/F1..F5` |

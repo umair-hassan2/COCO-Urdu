@@ -1,0 +1,43 @@
+{
+  "images": {
+    "train": 58549,
+    "validation": 5000
+  },
+  "images_total": 63549,
+  "captions": {
+    "train": 292907,
+    "validation": 25014
+  },
+  "captions_total": 317921,
+  "captions_per_image": {
+    "mean": 5.002769516436136,
+    "min": 5,
+    "max": 7
+  },
+  "unique_image_ids_in_caption_table": 63549,
+  "qe_v1": {
+    "comet_score": {
+      "mean": 0.7552757840607398,
+      "std": 0.09396886323852528,
+      "below_0.7": 80344
+    },
+    "bert_score": {
+      "mean": 0.9699149131774902,
+      "std": 0.02277551218867302,
+      "below_0.7": 4
+    },
+    "clip_score": {
+      "mean": 0.7486534548987823,
+      "std": 0.12408275918248303,
+      "below_0.7": 98003
+    },
+    "final_score": {
+      "mean": 0.8398069676437808,
+      "std": 0.04982427930835801,
+      "below_0.7": 3572
+    }
+  },
+  "flagged_final_lt_0.7": 3572,
+  "empty_urdu": 0,
+  "duplicate_urdu_within_image": 211
+}

@@ -1,7 +1,7 @@
-"""COMET-Kiwi over ALL captions x systems (Colab L4, ~2-3 units) -> data/qe_full/comet_kiwi.parquet (uid, system, score).
+"""COMET-Kiwi over every caption (Colab L4) -> data/qe_full/comet_kiwi.parquet (uid, system, score).
 
-Feeds scripts/09_qe_select.py. Resumable per system.
-  python scripts/11_comet_full.py --systems seamless gemma27b
+Scores feed the study stratification in scripts/05_build_study.py. Resumable per system.
+  python scripts/11_comet_full.py --systems gemma27b --path data/translations/gemma27b_repaired.parquet
 """
 import argparse
 import sys
@@ -20,6 +20,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--systems", nargs="+", required=True)
     ap.add_argument("--batch-size", type=int, default=128)
+    ap.add_argument("--path", default=None,
+                    help="explicit parquet for a single --systems entry; default "
+                         "data/translations/<system>.parquet. Use it to score the repaired corpus "
+                         "while keeping the system name (and column) as <system>.")
     args = ap.parse_args()
     log = get_logger()
     out_dir = DATA / "qe_full"; out_dir.mkdir(parents=True, exist_ok=True)
@@ -33,7 +37,8 @@ def main():
         if s == "seamless":
             df = caps.rename(columns={"ur_seamless": "ur"})
         else:
-            t = pd.read_parquet(DATA / "translations" / f"{s}.parquet")
+            src = Path(args.path) if args.path and len(args.systems) == 1 else DATA / "translations" / f"{s}.parquet"
+            t = pd.read_parquet(src)
             df = caps.drop(columns="ur_seamless").merge(t[["uid", f"ur_{s}"]], on="uid").rename(columns={f"ur_{s}": "ur"})
         df = df.dropna(subset=["ur"])
         log.info(f"{s}: scoring {len(df):,} captions (COMET prints its own batch progress bar)")

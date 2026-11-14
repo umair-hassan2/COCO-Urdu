@@ -1,7 +1,5 @@
-"""Urdu text normalization and cheap automatic sanity checks.
-
-Catches what reviewers caught by eye in v1: non-words ("ایلیف"), misspellings ("ابزار"),
-untranslated English, empty output, wrong script.
+"""
+Urdu text normalization and cheap automatic sanity checks.
 """
 from __future__ import annotations
 
@@ -17,6 +15,44 @@ DIGITS = re.compile(r"[0-9۰-۹٠-٩]")
 # Urdu punctuation: ۔ ، ؟ ؛ plus ASCII
 PUNCT = re.compile(r"[\s\.\,\!\?\;\:\-\"\'\(\)\[\]\{\}«»،۔؟؛…]+")
 DIACRITICS = re.compile(r"[ً-ْٰٓ-ٕ]")
+
+# Characters an Urdu caption may legitimately contain: the Arabic/Urdu blocks, Latin (flagged
+# separately by has_untranslated_english), digits, whitespace, and the punctuation, symbols and
+# numerals a caption may quote from the image it describes -- dashes, quotes, currency, fractions.
+# Anything left is a letter from another writing system -- see docs/FINDINGS.md Finding 1.
+URDU_OK = re.compile(
+    r"[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF"      # Arabic / Urdu
+    r"A-Za-z\u00C0-\u024F0-9\s"                                        # Latin incl. accents, digits
+    r"\.\,\!\?\;\:\-\"\'\(\)\[\]\{\}«»…/"                      # shared punctuation
+    r"\u2010-\u2015\u2018-\u201F\u2032\u2033\u2044"                        # dashes, curly quotes, primes
+    r"*@#$&%+=<>|~^\\`"                                                # ASCII symbols on signage
+    r"\u00A2-\u00A5\u20AC\u20B9\u00B0\u00B7\u00D7\u00BC-\u00BE"     # currency, degree, fractions
+    r"\u02BB\u02BC\u200C-\u200F\uFEFF]"                               # okina, bidi/joiner controls
+)
+
+_SCRIPT_PREFIXES = (
+    "DEVANAGARI", "KATAKANA", "HIRAGANA", "CYRILLIC", "BENGALI", "KANNADA", "GUJARATI",
+    "HANGUL", "TAMIL", "TELUGU", "MALAYALAM", "GURMUKHI", "ORIYA", "SINHALA", "THAI",
+    "HEBREW", "ARMENIAN", "GEORGIAN", "GREEK",
+)
+
+
+def script_of(ch: str) -> str:
+    """Writing system a character belongs to, by its Unicode name. 'Other' for symbols."""
+    try:
+        name = unicodedata.name(ch)
+    except ValueError:
+        return "Other"
+    for p in _SCRIPT_PREFIXES:
+        if name.startswith(p):
+            return "Japanese" if p in ("KATAKANA", "HIRAGANA") else p.title()
+    return "Han" if name.startswith("CJK") else "Other"
+
+
+def foreign_script_chars(text: str) -> list[str]:
+    """Characters outside the Urdu-legitimate set. Catches 'فرسビー' that wrong_script misses."""
+    return [c for c in (text or "") if not URDU_OK.match(c)]
+
 
 # Arabic-presentation and look-alike normalizations commonly needed for Urdu.
 # Keys must be single characters -- str.maketrans rejects sequences. NFC runs first in
@@ -88,6 +124,11 @@ def caption_checks(en: str, ur: str, lexicon: Lexicon | None = None) -> dict:
         "too_long": ur_len / en_len > 2.5,
         "repeated_trigram": _has_repeated_ngram(tokenize(ur_n), 3),
     }
+    # script contamination: one stray character leaves arabic_ratio near 1.0, so wrong_script
+    # cannot see it. Measured at 2.1% of the v2 corpus -- docs/FINDINGS.md Finding 1.
+    foreign = foreign_script_chars(ur_n)
+    out["foreign_chars"] = foreign
+    out["has_foreign_script"] = bool(foreign)
     if lexicon is not None:
         oov = lexicon.oov(ur_n)
         out["oov_tokens"] = oov

@@ -21,9 +21,8 @@ Mac and Colab steps **interleave** — they are not two separate phases. Run top
 | 6 | Mac | `06_score_qe.py --metrics comet_kiwi metricx siglip2` | → `data/study/qe_scores.parquet` |
 | 6b | **Colab NB03** (L4) | `06_score_qe.py --metrics xcomet` | **required — this Mac has 24 GB**; `sync.py push data/study/items.jsonl` first, `sync.py pull data/study/qe_scores.parquet` after |
 | 7 | Mac | rating tool → `07_analyze_ratings.py` | → `results/ratings.sqlite`, `results/human_study/` (and the QE weights step 9 uses) |
-| 8 | **Colab NB02** (L4) | `11_comet_full.py --systems seamless gemma27b` | pulls the translations NB01 pushed → `data/qe_full/comet_kiwi.parquet`; `sync.py pull data/qe_full` on the Mac |
-| 9 | Mac | `09_qe_select.py --systems seamless gemma27b` | needs step 8's parquet → `data/translations/qe_selected.parquet` |
-| 10 | Mac | `08_retrieval.py --condition ...` (all 5) | needs step 2 embeddings + step 9 `qe_selected` |
+| 8 | **Colab NB02** (L4) | `11_comet_full.py --systems gemma27b` | **run this before step 5** — it stratifies the study sample → `data/qe_full/comet_kiwi.parquet`; `sync.py pull data/qe_full` on the Mac |
+| 9 | Mac | `08_retrieval.py --condition ...` (`zero_shot`, `gemma27b`, `english`) | needs step 2 embeddings |
 | 11 | **Colab NB04** (L4) | VLM baselines | **no dependencies** — good filler whenever units are idle |
 | 12 | Mac | `12_figures.py` | after 07 and 08 |
 
@@ -93,11 +92,11 @@ No A100? `--model google/gemma-3-12b-it` on L4 in bf16 (`--system gemma12b`).
 
 ## 3. COMET-Kiwi over ALL captions × systems for qe-selection (L4, ~2–3 units)
 ```python
-!python -u scripts/11_comet_full.py --systems seamless gemma27b
+!python -u scripts/11_comet_full.py --systems gemma27b
 ```
 Writes `data/qe_full/comet_kiwi.parquet` (`uid, system, score`), resumable per system. The notebook pulls
 `data/translations/<system>.parquet` from the artifacts repo (NB01 pushed it). Then on the Mac:
-`sync.py pull data/qe_full` and `scripts/09_qe_select.py --systems seamless gemma27b`.
+`sync.py pull data/qe_full`; the scores stratify the human-study sample in `05_build_study.py`.
 
 ## 4. Zero-shot VLM captioning baselines (L4, ~5–7 units each)
 ```python
@@ -106,7 +105,7 @@ Writes `data/qe_full/comet_kiwi.parquet` (`uid, system, score`), resumable per s
 ```
 
 ## What runs on the Mac (0 units)
-`00_dataset_stats`, `01_table2_forensics`, `02_embed_images` (MPS, ~1 h), `build_lexicon`, `04_sanity_check`, `05_build_study`, `06_score_qe --metrics comet_kiwi metricx siglip2`, `07_analyze_ratings`, `08_retrieval` (all conditions), `09_qe_select`, `12_figures`, the rating tool, and `sync.py push/pull` around every Colab hop.
+`00_dataset_stats`, `01_table2_forensics`, `02_embed_images` (MPS, ~1 h), `build_lexicon`, `04_sanity_check`, `05_build_study`, `06_score_qe --metrics comet_kiwi metricx siglip2`, `07_analyze_ratings`, `08_retrieval` (3 conditions), `12_figures`, the rating tool, and `sync.py push/pull` around every Colab hop.
 (xCOMET is **not** on this list — 24 GB RAM sends it to NB03.)
 
 ## Driving Colab from this repo (colab-mcp)

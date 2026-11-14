@@ -11,6 +11,17 @@
 - Keep the 63.5K-image stratified subset (budget); state GPU-hour cost of the full set as a limitation.
 - One shared prompt for all LLM translators (`cocourdu/prompts.py`), temperature 0.
 - Human study: ≥2 raters per (item, system), 300-item core with all raters; author rates and is disclosed.
+- **(2026-11-14) Refinement stays retired.** Quality is argued from the human study and the
+  downstream retrieval experiment, not from a rewrite loop.
+- **(2026-11-14) The paper is a dataset paper, not an LLM-vs-NMT comparison.** The human study rates
+  **gemma27b only**. Consequences, accepted: `09_qe_select.py` becomes a no-op and is dropped
+  (selection needs >=2 systems), with it the `qe_top50` retrieval condition, and the pairwise
+  win-rate table in `07_analyze_ratings.py`. Seamless survives **only** as the single contrast row in
+  Findings 1-2 showing the defect is LLM-specific — a number already in `captions_v1`, no run needed.
+  It is dropped from the human study, from QE-selection and from the retrieval conditions.
+- **(2026-11-14) Study items are stratified on gemma27b's own COMET-Kiwi**, not v1's `final_score`.
+  v1 scored a different system's output and is not a valid difficulty proxy for this corpus.
+  This makes `11_comet_full.py` a prerequisite of `05_build_study.py`, not a later step.
 
 ## TODO / pending
 - [x] Translation route: Gemma 3 27B on Colab only (no paid APIs)
