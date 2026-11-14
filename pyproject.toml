@@ -33,6 +33,11 @@ qe = [
   "cocourdu[ml]",
   "unbabel-comet>=2.2",
   "bert-score>=0.3.13",
+  # unbabel-comet 2.2.x pins torchmetrics<0.11, which still imports pkg_resources
+  "torchmetrics>=0.10.2,<0.11",
+  "setuptools<81",
+  # 4.50+ dropped PreTrainedModel from the package root, which torchmetrics imports eagerly
+  "transformers<4.50",
 ]
 analysis = ["matplotlib>=3.9", "seaborn>=0.13", "statsmodels>=0.14"]
 

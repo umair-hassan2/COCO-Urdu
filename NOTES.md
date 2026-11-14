@@ -10,7 +10,16 @@
 ## Decisions
 - Keep the 63.5K-image stratified subset (budget); state GPU-hour cost of the full set as a limitation.
 - One shared prompt for all LLM translators (`cocourdu/prompts.py`), temperature 0.
-- Human study: ≥2 raters per (item, system), 300-item core with all raters; author rates and is disclosed.
+- **(2026-11-15) Human study is validation, not scoring.** The paper reports individual QE metrics
+  as absolute corpus statistics; the study exists to license them, so the fitted composite is
+  dropped — remove `fit_weights` from `07_analyze_ratings.py` and the `0.4/0.4/0.2` comparison with
+  it. Nothing downstream consumes a composite now that `09_qe_select` is gone.
+  Keep: metric↔human correlation, adequacy/fluency means with item-level bootstrap CIs,
+  Krippendorff α / ICC on the core, and error-type rates.
+  Size: `--n 300 --core 100`, 2–3 raters, gemma27b only ≈ **700 ratings**, ~1 h per rater
+  (was 995 items / ~2,290 ratings). 300 items gives a Spearman CI of about ±0.10 — enough to show a
+  metric tracks human judgement, not enough to rank metrics against each other.
+  ≥2 raters per item, author rates and is disclosed.
 - **(2026-11-14) Refinement stays retired.** Quality is argued from the human study and the
   downstream retrieval experiment, not from a rewrite loop.
 - **(2026-11-14) The paper is a dataset paper, not an LLM-vs-NMT comparison.** The human study rates

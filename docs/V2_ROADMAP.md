@@ -11,7 +11,7 @@
 | Study items | `05_build_study.py --raters ...` | Mac | `data/study/{items.jsonl,assignment.json}` |
 | Rating | `rating_tool/app.py` | Mac (+cloudflared) | `results/ratings.sqlite` |
 | QE baselines | `06_score_qe.py` | Mac / Colab L4 (xcomet) | `data/study/qe_scores.parquet` |
-| Analysis | `07_analyze_ratings.py` | Mac | `results/human_study/` |
+| Analysis | `07_analyze_ratings.py` | Mac | `results/human_study/` — correlation, CIs, agreement, error rates; **no fitted composite** |
 | Retrieval | `08_retrieval.py --condition ...` | Mac (MPS) | `results/retrieval/*.json` |
 | VLM baselines | `10_vlm_zero_shot.py` | Colab L4 | `results/vlm/` |
 

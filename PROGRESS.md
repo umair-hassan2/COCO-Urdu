@@ -10,11 +10,11 @@ Status: ☐ not started · ◐ running · ☑ done
 | 3 | Colab NB01 (A100) | sanity 1K → read report → full run → push | ☑ | **done 2026-11-12** — all 16 chunks, 317,829 rows, 0 empty; pushed to the artifacts repo |
 | 4 | Mac | `sync.py pull` + `04_sanity_check.py` | ☑ | passed; two defects found and both fixed — see 4b |
 | 4b | Mac | clean the translation corpus | **☑ DONE** | **2026-11-14.** Cross-script contamination 2.106% → **0.000%** (391 forms repaired by hand) · 280 refusal captions removed · corpus **317,829 → 317,549** · written up as Findings 1 and 2 in `docs/FINDINGS.md` — **the paper's machine-translation section** |
-| 5 | Mac | `05_build_study.py --raters ...` | ☐ | → `data/study/items.jsonl`; use `gemma27b_repaired.parquet`, **needs rater ids** |
+| 5 | Mac | `05_build_study.py --n 300 --core 100 --systems gemma27b --raters ...` | ☐ | stratify on `data/qe_full/comet_kiwi.parquet` (code change pending) · **needs rater ids** |
 | 6 | Mac | `06_score_qe.py --metrics comet_kiwi metricx siglip2` + push | ☐ | → `data/study/qe_scores.parquet` |
 | 7 | Colab NB03 (L4) | `06_score_qe.py --metrics xcomet` | ☐ | required: this Mac has 24 GB RAM |
-| 8 | Mac | `sync.py pull qe_scores` · rating tool · `07_analyze_ratings.py` | ☐ | → `results/ratings.sqlite`, QE weights for step 10 |
-| 9 | Colab NB02 (L4) | `11_comet_full.py --systems gemma27b` | ☐ | **moved before step 5** — it is the study stratifier → `data/qe_full/comet_kiwi.parquet` |
+| 8 | Mac | `sync.py pull qe_scores` · rating tool · `07_analyze_ratings.py` | ☐ | → `results/ratings.sqlite`, `results/human_study/` · **drop `fit_weights`** — validation only, no composite |
+| 9 | Colab NB02 (L4) | `11_comet_full.py --systems gemma27b` | **☑ DONE** | 2026-11-15 · 317,641 captions · mean **0.790**, median 0.811, 11.1% < 0.7 · pushed to the artifacts repo · **runs before step 5** as the study stratifier |
 | 10 | — | ~~`09_qe_select.py`~~ | **dropped** | selection needs ≥2 systems; the paper reports gemma27b only |
 | 11 | Mac | `08_retrieval.py` × 3 conditions (`zero_shot`, `gemma27b`, `english`) | ☐ | needs step 2 embeddings |
 | 12 | Colab NB04 (L4) | VLM baselines | ☐ | no dependencies — run whenever units are idle |
@@ -149,3 +149,8 @@ Model load is 384s cold, ~60s warm (torch.compile cache hit).
   every table in them regenerates from `scripts/13_script_contamination.py`.
 - 2026-11-14 — Step 1 closed. `00_dataset_stats` and `01_table2_forensics` run; the Table 2
   forensics is written up as Finding 3 in `docs/FINDINGS.md`.
+- 2026-11-15 — COMET-Kiwi over the whole corpus done on Colab L4 (step 9, now ordered before step 5).
+  Mean 0.790, 11.1% below 0.7. Getting COMET to install cost most of the session: `unbabel-comet`
+  pins `numpy<2`/`protobuf<5`/`torchmetrics<0.11`, which breaks Colab's preinstalled TensorFlow and
+  jax, and `transformers>=4.50` dropped `PreTrainedModel` from the package root. Working recipe is
+  baked into the `qe` extra and the NB02/NB03 install cells.

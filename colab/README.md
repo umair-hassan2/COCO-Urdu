@@ -55,7 +55,10 @@ to the artifacts repo with `scripts/sync.py`.
 ```python
 !git clone https://github.com/umair-hassan2/COCO-Urdu.git -b v2 && cd COCO-Urdu
 %cd /content/COCO-Urdu
-!pip install -q -e . && pip install -q vllm        # vllm only for job 1
+!pip install -q -e . && pip install -q vllm        # job 1 (translation)
+# !pip install -q -e ".[qe]"                      # jobs 2 and 3 (COMET-Kiwi, xCOMET) — the base
+#                                                  # install has no `comet` module
+# !pip install -q -e ".[ml]"                      # job 4 (VLM baselines)
 import os
 from google.colab import userdata          # Colab Secrets: sidebar key icon -> add HF_TOKEN
 os.environ['HF_TOKEN'] = userdata.get('HF_TOKEN')   # WRITE scope; inherited by the !python cells

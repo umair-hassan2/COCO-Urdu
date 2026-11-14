@@ -4,6 +4,15 @@ A running log of things the v2 run turned up that are results in their own right
 build notes. Each entry states what is broken, why, how much, and how it was measured, so it can be
 lifted into the paper with the numbers intact. Build/status notes stay in `PROGRESS.md`.
 
+Every entry is tagged **PAPER** or **INTERNAL**. The paper is a standalone dataset paper and never
+mentions v1, so anything whose subject is v1 is internal regardless of how solid it is.
+
+| | | |
+|---|---|---|
+| Finding 1 — cross-script substitution | **PAPER** | §4, machine translation |
+| Finding 2 — refusals in the corpus | **PAPER** | §4, machine translation |
+| Finding 3 — v1 Table 2 inflation | **INTERNAL** | subject is v1; it is why v2 never refines references |
+
 ---
 
 ## Corpus accounting
@@ -19,9 +28,18 @@ Four numbers describe the same dataset; state them once so they are not read as 
 
 Mean 5.00 captions per image, range 5–7.
 
+Reference-free quality over the released corpus, COMET-Kiwi (`Unbabel/wmt22-cometkiwi-da`),
+`scripts/11_comet_full.py` → `data/qe_full/comet_kiwi.parquet`:
+
+| mean | median | std | < 0.7 | < 0.5 |
+|---|---|---|---|---|
+| 0.790 | 0.811 | 0.069 | 11.1% | 0.19% |
+
 ---
 
 ## Finding 1 — Cross-script token substitution in Gemma 3 27B (W4A16) Urdu output
+
+> **PAPER** — §4 machine translation.
 
 **Date:** 2026-11-14 · **Affects:** `data/translations/gemma27b.parquet` (317,549 captions)
 **Reproduce:** `uv run python scripts/13_script_contamination.py --translations data/translations/gemma27b.parquet --compare-v1`
@@ -216,6 +234,9 @@ without rendering right-to-left text.
 
 ## Finding 2 — The translator refuses to translate, and the refusal lands in the corpus
 
+> **PAPER** — §4 machine translation. The 280 captions are excluded from the release; the finding,
+> the mechanism and the verbatim model output are all reportable from `repairs/excluded_refusals.tsv`.
+
 **Date:** 2026-11-14 · **Affects:** the 2026-11-12 Gemma 3 27B run (317,829 captions as generated)
 **Record:** every affected caption is listed in `repairs/excluded_refusals.tsv`
 
@@ -314,6 +335,10 @@ captions will hit this, and it is a defect a reference-free metric cannot see.
 ---
 
 ## Finding 3 — Half of v1's reported refinement gain is a measurement artifact
+
+> **INTERNAL — not for publication.** The paper never mentions v1. This entry exists to record why
+> the v2 pipeline never lets an LLM touch the reference, and to answer that question if a reviewer
+> asks. To publish the methodological point, it must be reproduced as a v2 experiment.
 
 **Date:** 2026-11-14 · **Affects:** the v1 paper's Table 2 ("BLEU 0.31 → 0.76 after refinement")
 **Reproduce:** `make forensics` → `results/table2_forensics.md`, `results/table2_flagged_rows.parquet`
